@@ -1,0 +1,6 @@
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
+  onnxruntime-node: true
+  protobufjs: true
+  '@openrouter/sdk': true

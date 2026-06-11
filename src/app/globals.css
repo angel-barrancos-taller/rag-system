@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/*
+ * Neumorphism (soft UI) design tokens. Every raised/inset element shares the
+ * page background — the depth illusion comes only from the dual shadows.
+ * Tailwind v4 turns these into utilities: bg-neu-base, text-neu-text,
+ * shadow-neu, shadow-neu-sm, shadow-neu-inset, ...
+ */
+@theme {
+  --color-neu-base: #e0e5ec;
+  --color-neu-light: #ffffff;
+  --color-neu-dark: #a3b1c6;
+  --color-neu-text: #44506b;
+  --color-neu-muted: #5f6c8c;
+  --color-neu-accent: #4a5d8f;
+  --color-neu-danger: #a64545;
+
+  --shadow-neu: 9px 9px 18px var(--color-neu-dark), -9px -9px 18px var(--color-neu-light);
+  --shadow-neu-sm: 5px 5px 10px var(--color-neu-dark), -5px -5px 10px var(--color-neu-light);
+  --shadow-neu-inset:
+    inset 6px 6px 12px var(--color-neu-dark), inset -6px -6px 12px var(--color-neu-light);
+  --shadow-neu-inset-sm:
+    inset 3px 3px 6px var(--color-neu-dark), inset -3px -3px 6px var(--color-neu-light);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-neu-base);
+  color: var(--color-neu-text);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
