@@ -1,7 +1,9 @@
 import type { Embedder } from "./embedder";
 
+// HF migrated the Inference API to router.huggingface.co in 2025.
+// The old api-inference.huggingface.co domain is no longer reliably reachable.
 const HF_API =
-  "https://api-inference.huggingface.co/pipeline/feature-extraction";
+  "https://router.huggingface.co/hf-inference/pipeline/feature-extraction";
 const BATCH_SIZE = 32;
 
 function l2Normalize(v: number[]): number[] {
