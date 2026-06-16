@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { getConfig } from "@/lib/config";
+import { HuggingFaceApiEmbedder } from "@/lib/embeddings/hf-api-embedder";
 import { TransformersEmbedder } from "@/lib/embeddings/transformers-embedder";
 import type { LLMClient } from "@/lib/llm/llm-client";
 import { OpenRouterClient } from "@/lib/llm/openrouter-client";
@@ -28,11 +29,17 @@ export function setServicesForTesting(services: Services | null): void {
 function createServices(): Services {
   const config = getConfig();
   return {
-    embedder: new TransformersEmbedder(
-      config.EMBEDDING_MODEL,
-      config.EMBEDDING_DIMENSION,
-      config.RAG_DATA_DIR,
-    ),
+    embedder: process.env.VERCEL
+      ? new HuggingFaceApiEmbedder(
+          config.HF_EMBEDDING_MODEL,
+          config.EMBEDDING_DIMENSION,
+          config.HF_TOKEN,
+        )
+      : new TransformersEmbedder(
+          config.EMBEDDING_MODEL,
+          config.EMBEDDING_DIMENSION,
+          config.RAG_DATA_DIR,
+        ),
     store: new JsonVectorStore(path.join(config.RAG_DATA_DIR, "index.json"), {
       modelId: config.EMBEDDING_MODEL,
       dimension: config.EMBEDDING_DIMENSION,
