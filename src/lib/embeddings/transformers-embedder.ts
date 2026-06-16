@@ -1,7 +1,5 @@
 import path from "node:path";
 
-import { env, pipeline } from "@huggingface/transformers";
-
 import type { Embedder } from "./embedder";
 
 type FeatureExtraction = (
@@ -49,6 +47,7 @@ export class TransformersEmbedder implements Embedder {
 
   private getPipeline(): Promise<FeatureExtraction> {
     globalThis.__ragEmbedPipeline ??= (async () => {
+      const { env, pipeline } = await import("@huggingface/transformers");
       env.cacheDir = path.join(this.dataDir, "models");
       const extractor = await pipeline("feature-extraction", this.modelId, {
         dtype: "q8",
