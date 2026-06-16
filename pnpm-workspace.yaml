@@ -1,3 +1,9 @@
+overrides:
+  # @huggingface/transformers pins onnxruntime-node to 1.24.3, which dropped
+  # prebuilt darwin/x64 (Intel Mac) binaries. 1.23.0 is the last napi-v6
+  # release that still ships a darwin/x64 onnxruntime_binding.node.
+  onnxruntime-node: '1.23.0'
+
 allowBuilds:
   sharp: true
   unrs-resolver: true

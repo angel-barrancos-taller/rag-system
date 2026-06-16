@@ -55,7 +55,7 @@ export function QuerySection() {
     <NeuCard className="flex flex-col">
       <h2 className="mb-4 text-xl font-bold">Querying</h2>
 
-      <div className="flex max-h-[28rem] flex-1 flex-col gap-3 overflow-y-auto pb-2" aria-label="Conversation">
+      <div className="flex max-h-[28rem] flex-1 flex-col gap-6 overflow-y-auto pb-2" aria-label="Conversation">
         {messages.length === 0 && (
           <p className="text-sm text-neu-muted">Index some files, then ask anything about the code.</p>
         )}
@@ -65,7 +65,7 @@ export function QuerySection() {
               {message.content}
             </div>
           ) : (
-            <div key={index} className="mr-8 flex flex-col gap-2 self-start rounded-2xl p-4 shadow-neu-sm">
+            <div key={index} className="ml-2 mb-4 mr-16 flex flex-col gap-2 self-start rounded-2xl p-4 shadow-neu-sm">
               <p className="whitespace-pre-wrap">{message.content}</p>
               {message.sources && message.sources.length > 0 && (
                 <div className="flex flex-col gap-2" aria-label="Sources">
@@ -85,7 +85,7 @@ export function QuerySection() {
         </p>
       )}
 
-      <form onSubmit={onSubmit} className="flex items-end gap-3">
+      <form onSubmit={onSubmit} className="flex items-end gap-3 mt-6">
         <NeuTextarea
           aria-label="Ask a question about the indexed code"
           placeholder="How is the cart total calculated?"

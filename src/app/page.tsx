@@ -12,11 +12,8 @@ export default function Home() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <IndexingSection />
-        <QuerySection />
-      </div>
-
+      <IndexingSection />
+      <QuerySection />
       <EvalPanel />
     </main>
   );
