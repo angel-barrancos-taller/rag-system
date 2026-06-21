@@ -1,10 +1,13 @@
 import type { Embedder } from "./embedder";
 
-// HF migrated the Inference API to router.huggingface.co in 2025.
-// The old api-inference.huggingface.co domain is no longer reliably reachable.
-const HF_API =
-  "https://router.huggingface.co/hf-inference/pipeline/feature-extraction";
+// OpenAI-compatible embeddings endpoint on the HF router.
+// Supports a much wider model catalog than the /pipeline/feature-extraction path.
+const HF_BASE = "https://router.huggingface.co/hf-inference/models";
 const BATCH_SIZE = 32;
+
+interface EmbeddingsResponse {
+  data: Array<{ embedding: number[] }>;
+}
 
 function l2Normalize(v: number[]): number[] {
   const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
@@ -12,10 +15,9 @@ function l2Normalize(v: number[]): number[] {
 }
 
 /**
- * Embedder backed by the Hugging Face Inference API.
+ * Embedder backed by the Hugging Face Inference API (OpenAI-compatible endpoint).
  * Used in serverless environments (Vercel) where onnxruntime-node's native
- * binaries can't be resolved. HF_TOKEN is optional for public models but
- * avoids rate limits.
+ * binaries can't be resolved. HF_TOKEN is required to avoid rate limits.
  */
 export class HuggingFaceApiEmbedder implements Embedder {
   constructor(
@@ -40,10 +42,10 @@ export class HuggingFaceApiEmbedder implements Embedder {
     };
     if (this.hfToken) headers["Authorization"] = `Bearer ${this.hfToken}`;
 
-    const response = await fetch(`${HF_API}/${this.modelId}`, {
+    const response = await fetch(`${HF_BASE}/${this.modelId}/v1/embeddings`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ inputs, options: { wait_for_model: true } }),
+      body: JSON.stringify({ input: inputs, model: this.modelId }),
     });
 
     if (!response.ok) {
@@ -51,24 +53,7 @@ export class HuggingFaceApiEmbedder implements Embedder {
       throw new Error(`HF Inference API error ${response.status}: ${text}`);
     }
 
-    // The feature-extraction pipeline returns [batch, dim] for sentence
-    // transformers that already apply pooling, or [batch, seq_len, dim] for
-    // token-level models. Handle both by mean-pooling if needed.
-    const raw: number[][] | number[][][] = await response.json();
-    return (raw as (number[] | number[][])[]).map((item) => {
-      const vec: number[] = Array.isArray(item[0])
-        ? meanPool(item as number[][])
-        : (item as number[]);
-      return l2Normalize(vec);
-    });
+    const json: EmbeddingsResponse = await response.json();
+    return json.data.map((item) => l2Normalize(item.embedding));
   }
-}
-
-function meanPool(tokenVectors: number[][]): number[] {
-  const dim = tokenVectors[0].length;
-  const sum = new Array<number>(dim).fill(0);
-  for (const v of tokenVectors) {
-    for (let i = 0; i < dim; i++) sum[i] += v[i];
-  }
-  return sum.map((x) => x / tokenVectors.length);
 }

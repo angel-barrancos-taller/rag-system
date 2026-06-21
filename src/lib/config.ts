@@ -7,8 +7,11 @@ const ConfigSchema = z.object({
   // jina-embeddings-v2-base-code model is gated and needs an HF login.
   EMBEDDING_MODEL: z.string().default("Xenova/bge-small-en-v1.5"),
   // Remote HF model used when VERCEL=1 (onnxruntime-node can't run in serverless).
-  // Requires HF_TOKEN — cloud IPs are blocked without auth on router.huggingface.co.
-  HF_EMBEDDING_MODEL: z.string().default("BAAI/bge-small-en-v1.5"),
+  // Must be a model listed in the hf-inference provider catalog on router.huggingface.co.
+  // Requires HF_TOKEN — cloud IPs are rate-limited without auth.
+  HF_EMBEDDING_MODEL: z
+    .string()
+    .default("sentence-transformers/all-MiniLM-L6-v2"),
   HF_TOKEN: z.string().optional(),
   EMBEDDING_DIMENSION: z.coerce.number().int().positive().default(384),
   RAG_DATA_DIR: z.string().default(".rag-data"),
