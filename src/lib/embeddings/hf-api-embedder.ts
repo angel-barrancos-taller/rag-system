@@ -1,23 +1,29 @@
 import type { Embedder } from "./embedder";
 
-// OpenAI-compatible embeddings endpoint on the HF router.
-// Supports a much wider model catalog than the /pipeline/feature-extraction path.
+// HF Inference router, feature-extraction pipeline. The model must come first
+// in the path; the /pipeline/feature-extraction suffix forces the right task
+// (the bare /models/{id} path defaults to sentence-similarity for ST models).
 const HF_BASE = "https://router.huggingface.co/hf-inference/models";
 const BATCH_SIZE = 32;
-
-interface EmbeddingsResponse {
-  data: Array<{ embedding: number[] }>;
-}
 
 function l2Normalize(v: number[]): number[] {
   const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
   return norm === 0 ? v : v.map((x) => x / norm);
 }
 
+function meanPool(tokenVectors: number[][]): number[] {
+  const dim = tokenVectors[0].length;
+  const sum = new Array<number>(dim).fill(0);
+  for (const v of tokenVectors) {
+    for (let i = 0; i < dim; i++) sum[i] += v[i];
+  }
+  return sum.map((x) => x / tokenVectors.length);
+}
+
 /**
- * Embedder backed by the Hugging Face Inference API (OpenAI-compatible endpoint).
+ * Embedder backed by the Hugging Face Inference API.
  * Used in serverless environments (Vercel) where onnxruntime-node's native
- * binaries can't be resolved. HF_TOKEN is required to avoid rate limits.
+ * binaries can't be resolved. HF_TOKEN is required (cloud IPs are rate-limited).
  */
 export class HuggingFaceApiEmbedder implements Embedder {
   constructor(
@@ -42,18 +48,28 @@ export class HuggingFaceApiEmbedder implements Embedder {
     };
     if (this.hfToken) headers["Authorization"] = `Bearer ${this.hfToken}`;
 
-    const response = await fetch(`${HF_BASE}/${this.modelId}/v1/embeddings`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ input: inputs, model: this.modelId }),
-    });
+    const response = await fetch(
+      `${HF_BASE}/${this.modelId}/pipeline/feature-extraction`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ inputs }),
+      },
+    );
 
     if (!response.ok) {
       const text = await response.text().catch(() => response.statusText);
       throw new Error(`HF Inference API error ${response.status}: ${text}`);
     }
 
-    const json: EmbeddingsResponse = await response.json();
-    return json.data.map((item) => l2Normalize(item.embedding));
+    // Sentence-transformer / BGE models return [batch, dim] (already pooled).
+    // Token-level models return [batch, seq_len, dim]; mean-pool those.
+    const raw = (await response.json()) as (number[] | number[][])[];
+    return raw.map((item) => {
+      const vec = Array.isArray(item[0])
+        ? meanPool(item as number[][])
+        : (item as number[]);
+      return l2Normalize(vec);
+    });
   }
 }
